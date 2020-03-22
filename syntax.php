@@ -98,7 +98,9 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 			if (isset($entry->entities->media)) {
 				foreach ($entry->entities->media as $media) {
 					$media_url = $media->media_url_https;
-					$media_links .= '<a class=""urlextern" target="_blank" href="' . $media_url . '">' . $media_url . '</a><br/>';
+					$media_links .= '<a class=""urlextern" target="_blank" href="' . $media_url . '">';
+					$media_links .= p_render('xhtml', p_get_instructions('{{' . $media_url . '?150|}}'), $info);
+					$media_links .=	'</a><br/>';
 				}
 			}
 
