@@ -5,7 +5,9 @@
  * @license GPL 2 (http://opensource.org/licenses/gpl-2.0.php)
  * @author Christoph Lang <calbity@gmx.de>
  * @author Mark C. Prins <mprins@users.sf.net>
+ * @author Raphael Wimmer <raphael@winterwind.org>
  */
+
 if (!defined('DOKU_INC')) {
 	die();
 }
@@ -145,6 +147,9 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 	function connectTo($mode) {
 		$this->Lexer->addSpecialPattern('\[TWITTER\:USER\:.*?\]', $mode, 'plugin_twitter');
 		$this->Lexer->addSpecialPattern('{{twitter>user\:.*?}}', $mode, 'plugin_twitter');
+		
+		$this->Lexer->addSpecialPattern('\[TWITTER\:TWEET\:.*?\]', $mode, 'plugin_twitter');
+		$this->Lexer->addSpecialPattern('{{twitter>tweet\:.*?}}', $mode, 'plugin_twitter');
 
 		$this->Lexer->addSpecialPattern('\[TWITTER\:SEARCH\:.*?\]', $mode, 'plugin_twitter');
 		$this->Lexer->addSpecialPattern('{{twitter>search\:.*?}}', $mode, 'plugin_twitter');
@@ -234,6 +239,11 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 				'count' => $number,
 				'include_entities' => false
 			));
+		} elseif (strtoupper($data [1]) == "TWEET") {
+			$json = $this->getData("https://api.twitter.com/1.1/statuses/show.json", array(
+				'id' => $data [2],
+				'include_entities' => false
+			));
 		} else {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/user_timeline.json", array(
 				'screen_name' => $data [2],
@@ -241,6 +251,9 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 			));
 		}
 		$decode = json_decode($json);
+		if (strtoupper($data [1]) == "TWEET") {
+			$decode = array($decode);    // we only have a single tweet here
+		}
 		// dbglog($decode, "=======================decoded json from Twitter============================");
 		if (isset($decode->search_metadata)) {
 			return array(
