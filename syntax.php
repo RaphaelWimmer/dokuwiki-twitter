@@ -74,6 +74,9 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 				'<a href="http://$1" class="urlextern" target="_blank">$1</a>'
 			);
 			$text = preg_replace($search, $replace, $text);
+			
+			// replace "RT" with "🗘" 
+			$text = preg_replace('/^RT /', '🗘 ' , $text);
 
 			// get hashtags
 			if (preg_match_all('/#(.*?)\s/', $text, $arMatches)) {
