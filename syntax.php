@@ -47,7 +47,7 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 
 		foreach ($data as $entry) {
 			// dbglog($entry, "=================entry=================");
-			$text = $entry->text . " ";
+			$text = $entry->full_text . " ";
 			$image = $entry->user->profile_image_url;
 			$time = $entry->created_at;
 			$time = strtotime($time);
@@ -237,16 +237,19 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 			$json = $this->getData("https://api.twitter.com/1.1/search/tweets.json", array(
 				'q' => $data [2],
 				'count' => $number,
+				'tweet_mode' => 'extended',
 				'include_entities' => false
 			));
 		} elseif (strtoupper($data [1]) == "TWEET") {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/show.json", array(
 				'id' => $data [2],
+				'tweet_mode' => 'extended',
 				'include_entities' => false
 			));
 		} else {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/user_timeline.json", array(
 				'screen_name' => $data [2],
+				'tweet_mode' => 'extended',
 				'count' => $number
 			));
 		}
