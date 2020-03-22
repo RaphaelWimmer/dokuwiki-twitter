@@ -234,6 +234,7 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 				), $match);
 		$match = substr($match, 1, - 1);
 		$data = explode(":", $match);
+		$render_mode = strtoupper($data[1]); // USER, SEARCH, TWEET
 
 		$this->_oauth_consumer_key = $this->getConf('oauth_consumer_key');
 		$this->_oauth_consumer_secret = $this->getConf('oauth_consumer_secret');
@@ -249,28 +250,33 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 			$number = $data [3];
 		}
 		$data [2] = str_replace(" ", "%20", $data [2]);
-		if (strtoupper($data [1]) == "SEARCH") {
+		if ($render_mode == "SEARCH") {
 			$json = $this->getData("https://api.twitter.com/1.1/search/tweets.json", array(
 				'q' => $data [2],
 				'count' => $number,
 				'tweet_mode' => 'extended',
 				'include_entities' => false
 			));
-		} elseif (strtoupper($data [1]) == "TWEET") {
+		} elseif ($render_mode == "TWEET") {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/show.json", array(
 				'id' => $data [2],
 				'tweet_mode' => 'extended',
 				'include_entities' => true
 			));
-		} else {
+		} elseif ($render_mode == "USER") {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/user_timeline.json", array(
 				'screen_name' => $data [2],
 				'tweet_mode' => 'extended',
 				'count' => $number
 			));
-		}
+		} else {
+		    return arrayy(NULL, "ERROR, invalid mode");
+		}	
+
+
+
 		$decode = json_decode($json);
-		if (strtoupper($data [1]) == "TWEET") {
+		if ($render_mode == "TWEET") {
 			$decode = array($decode);    // we only have a single tweet here
 		}
 		// dbglog($decode, "=======================decoded json from Twitter============================");
