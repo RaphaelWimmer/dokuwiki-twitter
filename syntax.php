@@ -92,9 +92,20 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 					$text = str_replace($strTwitterer, '<a class="urlextern" target="_blank" href="https://twitter.com/' . $strTwitterer . '">' . $strTwitterer . "</a>", $text);
 				}
 			}
+
+			// get media
+			$media_links = '';
+			if (isset($entry->entities->media)) {
+				foreach ($entry->entities->media as $media) {
+					$media_url = $media->media_url_https;
+					$media_links .= '<a class=""urlextern" target="_blank" href="' . $media_url . '">' . $media_url . '</a><br/>';
+				}
+			}
+
+
 			$sResponse .= '<tr class="twtRow">';
 			$sResponse .= '  <td class="twtImage">' . p_render('xhtml', p_get_instructions('{{' . $image . '?48&nolink|' . $from . ' avatar}}'), $info) . '</td>';
-			$sResponse .= '  <td class="twtMsg">' . $text . '<br/><a href="' . $permalink . '" class="urlextern twtUrlextern" target="_blank">' . sprintf($this->getLang('timestamp'), $time) . '</a> <a class="urlextern twtUrlextern" target="_blank" href="https://twitter.com/' . $from . '">' . $name . " (@" . $from . ")" . '</a></td>';
+			$sResponse .= '  <td class="twtMsg">' . $text . '<br/><a href="' . $permalink . '" class="urlextern twtUrlextern" target="_blank">' . sprintf($this->getLang('timestamp'), $time) . '</a> <a class="urlextern twtUrlextern" target="_blank" href="https://twitter.com/' . $from . '">' . $name . " (@" . $from . ")" . '</a><br/>' . $media_links . '</td>';
 			$sResponse .= '</tr>';
 		}
 		$sResponse .= '</table></div>';
@@ -247,7 +258,7 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/show.json", array(
 				'id' => $data [2],
 				'tweet_mode' => 'extended',
-				'include_entities' => false
+				'include_entities' => true
 			));
 		} else {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/user_timeline.json", array(
