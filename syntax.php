@@ -223,6 +223,18 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 	 */
 	function handle($match, $state, $pos, Doku_Handler $handler) {
 		global $conf;
+
+		// first initialize oauth and warn if tokens are not set
+		$this->_oauth_consumer_key = $this->getConf('oauth_consumer_key');
+		$this->_oauth_consumer_secret = $this->getConf('oauth_consumer_secret');
+		$this->_oauth_token = $this->getConf('oauth_token');
+		$this->_oauth_token_secret = $this->getConf('oauth_token_secret');
+		if (empty($this->_oauth_consumer_key) || empty($this->_oauth_consumer_secret) || empty($this->_oauth_token) || empty($this->_oauth_token_secret)) {
+			msg($this->getLang('configerror'), - 1, '', '', MSG_ADMINS_ONLY);
+			dbglog($this->getLang('configerror'), "TWITTER PLUGIN");
+		}
+
+		// get parameters 
 		$match = str_replace(array(
 			">",
 			"{{",
@@ -235,60 +247,54 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 		$match = substr($match, 1, - 1);
 		$data = explode(":", $match);
 		$render_mode = strtoupper($data[1]); // USER, SEARCH, TWEET
-
-		$this->_oauth_consumer_key = $this->getConf('oauth_consumer_key');
-		$this->_oauth_consumer_secret = $this->getConf('oauth_consumer_secret');
-		$this->_oauth_token = $this->getConf('oauth_token');
-		$this->_oauth_token_secret = $this->getConf('oauth_token_secret');
-		if (empty($this->_oauth_consumer_key) || empty($this->_oauth_consumer_secret) || empty($this->_oauth_token) || empty($this->_oauth_token_secret)) {
-			msg($this->getLang('configerror'), - 1, '', '', MSG_ADMINS_ONLY);
-			dbglog($this->getLang('configerror'), "TWITTER PLUGIN");
-		}
+		
+		$query = str_replace(" ", "%20", $data [2]);
 
 		$number = $this->getConf('maxresults');
 		if (isset($data [3])) {
 			$number = $data [3];
 		}
-		$data [2] = str_replace(" ", "%20", $data [2]);
+
+
 		if ($render_mode == "SEARCH") {
 			$json = $this->getData("https://api.twitter.com/1.1/search/tweets.json", array(
-				'q' => $data [2],
+				'q' => $query,
 				'count' => $number,
 				'tweet_mode' => 'extended',
 				'include_entities' => false
 			));
 		} elseif ($render_mode == "TWEET") {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/show.json", array(
-				'id' => $data [2],
+				'id' => $query,
 				'tweet_mode' => 'extended',
 				'include_entities' => true
 			));
 		} elseif ($render_mode == "USER") {
 			$json = $this->getData("https://api.twitter.com/1.1/statuses/user_timeline.json", array(
-				'screen_name' => $data [2],
+				'screen_name' => $query,
 				'tweet_mode' => 'extended',
 				'count' => $number
 			));
 		} else {
-		    return arrayy(NULL, "ERROR, invalid mode");
+		    return array(NULL, "ERROR, invalid mode"); // should never happen because we only registered the modes listed above
 		}	
 
 
 
 		$decode = json_decode($json);
 		if ($render_mode == "TWEET") {
-			$decode = array($decode);    // we only have a single tweet here
+			$decode = array($decode);    // we only have a single tweet here, wrap it in an array so we can iterate over it as with the other results
 		}
 		// dbglog($decode, "=======================decoded json from Twitter============================");
 		if (isset($decode->search_metadata)) {
 			return array(
 				$decode->statuses,
-				$this->getLang('results') . ' <a class="urlextern" target="_blank" href="https://twitter.com/search?q=' . $data [2] . '">' . str_replace("%20", " and ", $data [2] . '</a>')
+				$this->getLang('results') . ' <a class="urlextern" target="_blank" href="https://twitter.com/search?q=' . $query . '">' . str_replace("%20", " and ", $query . '</a>')
 			);
 		}
 		return array(
 			$decode,
-			$this->getLang('header') . ' <a class="urlextern" target="_blank" href="https://twitter.com/' . $data [2] . '">@' . $data [2] . '</a>'
+			$this->getLang('header') . ' <a class="urlextern" target="_blank" href="https://twitter.com/' . $query . '">@' . $query . '</a>'
 		);
 	}
 
