@@ -254,6 +254,10 @@ class syntax_plugin_twitter extends DokuWiki_Syntax_Plugin {
 		if (isset($data [3])) {
 			$number = $data [3];
 		}
+		if (isset($data [4])) {
+			$options = explode(",", $data [4]);
+			// TODO: strip whitespace from all options
+		}
 
 
 		if ($render_mode == "SEARCH") {
